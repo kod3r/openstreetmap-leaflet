@@ -1,0 +1,78 @@
+﻿<html>
+<head>
+	<title>Leaflet Quick Start Guide Example</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../dist/leaflet.css" />
+	 <meta charset="utf-8">
+	<title>jQuery UI Slider - Default functionality</title>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+	<script src="jquery-1.10.2.js"></script>
+	<script src="jquery-ui.js"></script>
+	
+	<script>
+	$(function() {
+    $( "#slider" ).slider({
+		change: function( event, ui ) {
+			circle.setRadius((ui.value)*1000);
+		}
+	});
+	
+	});
+	
+	
+	</script>
+</head>
+<body>
+	<div id="map" style="width: 100%; height: 100%; "></div>
+
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+
+	<script>
+
+		var map = L.map('map').setView([28.612856636438657,77.21431732177734], 10);
+
+		L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			id: 'examples.map-i86knfo3'
+		}).addTo(map);
+		
+		var markerDraggable = new L.Marker([28.612856636438657,77.21431732177734], {
+            draggable: true,
+            title: 'Draggable'
+        });
+		map.addLayer(markerDraggable);
+		
+		var circle=L.circle([28.612856636438657,77.21431732177734], 0, {
+			color: 'red',
+			fillColor: '#f03',
+			fillOpacity: 0.5
+		}).addTo(map).bindPopup("I am a circle.");
+
+		markerDraggable.on('dragend', function(event) {
+			var marker = event.target;  // you could also simply access the marker through the closure
+			var result = marker.getLatLng();  // but using the passed event is cleaner
+			markerDraggable.bindPopup("Marker is at latitude "+result.lat+"and longitude "+result.lng).openPopup();
+			circle.setLatLng([result.lat,result.lng]);
+
+        });
+		
+		function onMapClick(e) {
+			var marker=L.marker([e.latlng.lat,e.latlng.lng]).addTo(map).bindPopup("Marker is at latitude "+e.latlng.lat+"and longitude "+e.latlng.lng).openPopup().dragging.enable();
+			var getInfoUrl="http://nominatim.openstreetmap.org/reverse?format=json&lat="+e.latlng.lat+"&lon="+e.latlng.lng+"&zoom=18&addressdetails=1"
+			$.ajax({url:getInfoUrl,success:function(result){
+				console.log(result)
+			}});
+		}
+		
+		map.on('click', onMapClick);
+		$( "#slider" ).on( "slidechange", function( event, ui, circle ) {} );
+
+	</script>
+	<div id="slider"></div>
+</body>
+</html>
