@@ -1,15 +1,16 @@
 ﻿<html>
 <head>
-	<title>Leaflet Quick Start Guide Example</title>
+	<title>leafjs implementation</title>
 	<meta charset="utf-8" />
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../dist/leaflet.css" />
 	 <meta charset="utf-8">
 	<title>jQuery UI Slider - Default functionality</title>
-	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" href="jquery-ui.css">
 	<script src="jquery-1.10.2.js"></script>
 	<script src="jquery-ui.js"></script>
+	<link rel="stylesheet" href="leaflet-routing-machine.css" />
 	
 	<script>
 	$(function() {
@@ -17,22 +18,46 @@
 		change: function( event, ui ) {
 			circle.setRadius((ui.value)*1000);
 		}
+		
 	});
-	
+	 
 	});
 	
 	
 	</script>
 </head>
 <body>
-	<div id="map" style="width: 100%; height: 100%; "></div>
 
-	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-
+	
+	<div id="container" style="width: 100%; height: 100%;float:left;border:1px solid ">
+	
+		<div  style="width: 24%; height: 100%;float:left;border:1px solid ">
+			
+			<div class="routebtn" style="width:100%;height: 30%;float:left;border:1px solid ">
+				<input type="text" name="search" id="aLocation"/><br/>
+				<input type="text" name="search" id="bLocation"/><br/>
+				<input type="button" value="Make Route" id="routeBtn"/> 
+			</div>
+			<div class="searchbox" style="width:100%;height: 70%;float:left;border:1px solid">
+				<input type="text" name="search" id="searchtext"/>
+				<input type="button" value="Search" id="searchBtn"/> 
+				<div id="detail"> </div>
+			</div>
+		</div>
+		<div id="map" style="width: 75%; height: 100%;float:right " ></div>
+		<div id="slider" style="top:620px"></div>
+	</div>
+	
+	<script src="../../leaflet/leaflet.js"></script>
+	<script src="leaflet-routing-machine.min.js"></script>
 	<script>
-
-		var map = L.map('map').setView([28.612856636438657,77.21431732177734], 10);
-
+		var map = L.map('map', {
+			center: [28.612856636438657,77.21431732177734],
+			zoom: 10,
+			doubleClickZoom:false
+		});
+		
+		
 		L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
@@ -40,6 +65,8 @@
 				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
 			id: 'examples.map-i86knfo3'
 		}).addTo(map);
+		
+		
 		
 		var markerDraggable = new L.Marker([28.612856636438657,77.21431732177734], {
             draggable: true,
@@ -54,25 +81,115 @@
 		}).addTo(map).bindPopup("I am a circle.");
 
 		markerDraggable.on('dragend', function(event) {
+		
 			var marker = event.target;  // you could also simply access the marker through the closure
 			var result = marker.getLatLng();  // but using the passed event is cleaner
 			markerDraggable.bindPopup("Marker is at latitude "+result.lat+"and longitude "+result.lng).openPopup();
 			circle.setLatLng([result.lat,result.lng]);
 
         });
+		markerDraggable.on('click', function(event) {
 		
-		function onMapClick(e) {
-			var marker=L.marker([e.latlng.lat,e.latlng.lng]).addTo(map).bindPopup("Marker is at latitude "+e.latlng.lat+"and longitude "+e.latlng.lng).openPopup().dragging.enable();
+			var marker = event.target;  // you could also simply access the marker through the closure
+			var result = marker.getLatLng();  // but using the passed event is cleaner
+			
+			circle.setLatLng([result.lat,result.lng]);
+			circle.setRadius(0);
+			$("#slider").slider('value', 0);
+			
+        });
+		
+		
+		function onMapDoubleClick(e) {
+			$("#slider").slider('value', 0);
+			var marker=L.marker([e.latlng.lat,e.latlng.lng],{draggable:'true'}).addTo(map).bindPopup("Marker is at latitude "+e.latlng.lat+"and longitude "+e.latlng.lng).openPopup();
+			addMarkerEvent(marker);
+			circle.setLatLng([e.latlng.lat,e.latlng.lng]);
+			circle.setRadius(0);
 			var getInfoUrl="http://nominatim.openstreetmap.org/reverse?format=json&lat="+e.latlng.lat+"&lon="+e.latlng.lng+"&zoom=18&addressdetails=1"
 			$.ajax({url:getInfoUrl,success:function(result){
 				console.log(result)
 			}});
+			L.Routing.control({
+				waypoints: [
+					L.latLng(28.5167536,77.39813,11),
+					L.latLng(28.612856636438657,77.21431732177734)
+				], lineOptions: {
+    styles: [
+      // Shadow
+      {color: 'black', opacity: 0.8, weight: 11},
+      // Outline
+      {color: 'green', opacity: 0.8, weight: 8},
+      // Center
+      {color: 'orange', opacity: 1, weight: 4}
+    ],
+  }
+			}).addTo(map);
 		}
-		
-		map.on('click', onMapClick);
+		function addMarkerEvent(marker){
+			marker.on('dragend', function(event) {
+				var markertarget = event.target;
+				
+				var result = markertarget.getLatLng();  
+				marker.bindPopup("Marker is at latitude "+result.lat+"and longitude "+result.lng).openPopup();
+				circle.setLatLng([result.lat,result.lng]);
+			});
+			marker.on('click', function(event) {
+				$("#slider").slider('value', 0);
+				var markertarget = event.target;
+				var result = markertarget.getLatLng();  
+				console.log("marker is click")
+				circle.setLatLng([result.lat,result.lng]);
+				circle.setRadius(0);
+			});
+		}
+		map.on('dblclick', onMapDoubleClick);
 		$( "#slider" ).on( "slidechange", function( event, ui, circle ) {} );
-
+		
+		$("#searchBtn").click(function(){
+				var getSearchUrl="http://nominatim.openstreetmap.org/search?q="+searchtext.value+"&format=json&addressdetails=1"
+				$.ajax({url:getSearchUrl,success:function(result){
+				console.log(result)
+				
+				$("ul").remove();
+				
+				$("#detail").append("<ul></ul>");
+				for(var i in result) {
+					var li = "<li>";
+					$("ul").append(li.concat('<a href="#" onClick="showDetails(\''+result[i].lat+'\', \''+result[i].lon+'\',\''+result[i].boundingbox+'\')">'+searchtext.value+' in country '+result[i].address.country+'</a>'))
+				}
+				
+				
+			}});
+		});
+		
+		$("#routeBtn").click(function(){
+			console.log(aLocation.value);
+			console.log(bLocation.value);
+			/*var getSearchUrl="http://nominatim.openstreetmap.org/search?q="+searchtext.value+"&format=json&addressdetails=1"
+				$.ajax({url:getSearchUrl,success:function(result){
+				console.log(result)
+				
+				$("ul").remove();
+				
+				$("#detail").append("<ul></ul>");
+				for(var i in result) {
+					var li = "<li>";
+					$("ul").append(li.concat('<a href="#" onClick="showDetails(\''+result[i].lat+'\', \''+result[i].lon+'\',\''+result[i].boundingbox+'\')">'+searchtext.value+' in country '+result[i].address.country+'</a>'))
+				}
+				
+				
+			}});*/
+		});
+		
+		
+		function showDetails(lat, lon, boundingBox){
+			markerDraggable.setLatLng([lat,lon]);
+			var arrayDemo=[];
+			arrayDemo=boundingBox.split(",")
+			map.setView([lat,lon]);
+		}
 	</script>
-	<div id="slider"></div>
+	
 </body>
 </html>
